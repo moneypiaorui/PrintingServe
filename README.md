@@ -6,3 +6,7 @@
 - app.js注册router内所有的路由，users.js负责处理注册和登录，vertify处理token的认证，uploadRouter将上传的文件写入uploads文件夹并在数据库写入文件信息
 - component内authMiddleware是token认证中间件，database注册数据库接口，fileWatcher监视uploads文件夹的变化并做出相应处理（还没写处理）
 ### 前端用了VUE和elementUI
+
+## 遇到的小问题
+- Vue无法监视通过数组索引产生的变化,例如visible[0] = 1;不会触发vue响应,但是visible = [1]会触发Vue的响应。
+> 这是因为 Vue 使用了 Object.defineProperty 或 Proxy 来劫持对象的属性访问，但是对于数组来说，直接赋值索引并不会触发属性的 setter，因此 Vue 无法得知数组的变化。
