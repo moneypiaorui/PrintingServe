@@ -5,13 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件上传和打印</title>
-    <script src="./vue.min.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
     <!-- 引入样式 -->
     <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
     <!-- 引入组件库 -->
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/axios@0.24.0/dist/axios.min.js"></script>
 
     <style>
         body {
@@ -66,19 +65,37 @@
         .el-table .success-row {
             background: #f0f9eb;
         }
+
+        .el-table .selected-row {
+            background: #c1fec0;
+        }
     </style>
 </head>
 
 <body>
     <div id="app" class="container">
-        
+
         <!-- <el-tooltip class="item" effect="dark" content="Bottom Center 提示文字" placement="bottom-end" color = "blue">
             <i class = "el-icon-user-solid"></i>
           </el-tooltip> -->
         <h1>文件上传和打印</h1>
-        <el-table @row-click="(row)=>{ rFilename= row.fileName}" :row-class-name="tableRowClassName" :data="fileList"
+        <el-table  @cell-click="(row,column)=>{if(column.label=='文件名')rFilename= row.filename;}" :row-class-name="tableRowClassName" :data="fileList"
             style="width: 400px" max-height="250">
-            <el-table-column prop="fileName" label="文件名">
+            <el-table-column prop="filename" label="文件名">
+            </el-table-column>
+            <el-table-column align="center" width="50px" label="操作" >
+                <template slot-scope="scope" >
+                    <el-popover  placement="top" width="160" v-model="visible[scope.$index]">
+                        <p>确定删除吗？</p>
+                        <div style="text-align: right; margin: 0">
+                            <el-button size="mini" round type="text" @click="visible[scope.$index] = false">取消</el-button>
+                            <el-button type="danger" round size="mini"  @click.stop="handleDelete(scope.$index, scope.row)" >确定</el-button>
+                        </div>
+                        <el-button slot="reference" class="el-icon-delete" size="mini" type="danger" circle
+                         ></el-button>
+                    </el-popover>
+                </template>
+
             </el-table-column>
         </el-table>
         <div class="file-input">
@@ -92,25 +109,18 @@
         <div class="button-container">
             <el-button type="primary" v-on:click="printFile">打印</el-button>
             <el-button type="primary" v-on:click="getFileList">所有文件</el-button>
-            <el-button type="primary" v-on:click="logout" v-if="isLogin">登出</el-button>
+            <el-button type="danger" v-on:click="logout" v-if="isLogin">登出</el-button>
             <el-button type="primary" v-on:click="login" v-else>登录</el-button>
-        </div>
-        <div v-if="rFilename" class="success-message">
-            文件上传成功！
-        </div>
-        <div v-if="error" class="error-message">
-            {{ error }}
         </div>
     </div>
     <script>
-        new Vue({
+        const appVue = new Vue({
             el: '#app',
             data() {
                 return {
                     isLogin: 0,
                     username: '',
                     file: null,
-                    filename: null,
                     rFilename: null,
                     error: null,
                     //上传后的文件列表
@@ -120,13 +130,16 @@
                     // 运行上传文件大小，单位 M
                     fileSize: 50,
                     // 附件数量限制
-                    fileLimit: 10
+                    fileLimit: 0,
+                    // 文件页数
+                    pages: 0,
+                    visible: []
                 };
             },
             methods: {
                 tableRowClassName({ row, rowIndex }) {
-                    if (row.fileName === this.rFilename) {
-                        return 'success-row';
+                    if (row.filename === this.rFilename) {
+                        return 'selected-row';
                     }
                     return '';
                 },
@@ -136,6 +149,7 @@
                         const FileExt = file.name.replace(/.+\./, "").toLowerCase();
                         //计算文件的大小
                         const isLt5M = file.size / 1024 / 1024 < 50; //这里做文件大小限制
+
                         //如果大于50M
                         if (!isLt5M) {
                             this.$message('上传文件大小不能超过 50MB!');
@@ -143,9 +157,9 @@
                         }
                         //如果文件类型不在允许上传的范围内
                         if (this.fileType.includes(FileExt)) {
+                            console.log("上传文件合法");
                             return true;
-                        }
-                        else {
+                        } else {
                             this.$message.error("上传文件格式不正确!");
                             return false;
                         }
@@ -158,13 +172,13 @@
                         message: '超出最大上传文件数量的限制！'
                     }); return
                 },
+                // 上传文件
                 async uploadFile(item) {
-                    console.log(this.fileList)
                     this.file = item.file
-                    this.filename = item.file.name;
                     const formData = new FormData();
-                    formData.append('file', this.file);
-
+                    // formData.append('file', this.file);
+                    formData.append('file', this.file, encodeURIComponent(this.file.name));
+                    console.log(this.file.name);
                     try {
                         const response = await axios.post('/upload', formData, {
                             headers: {
@@ -172,14 +186,13 @@
                             }
                         });
                         if (response.status === 200) {
-                            this.rFilename = response.data;
                             this.$message({
                                 message: '上传成功',
                                 type: 'success'
                             });
                             // 刷新文件列表
                             // this.getFileList()
-                            this.fileList.push({ fileName: item.file.name });
+                            this.fileList.push({ filename: item.file.name });
                         } else {
                             this.$message.error('上传失败')
 
@@ -188,10 +201,39 @@
                         this.$message.error('上传失败', error)
                     }
                 },
+                // 删除
+                async handleDelete(index, row) {
+                    this.visible[index] = false;
+                    this.visible.map(tem=>false);
+                    console.log(this.visible)
+                    // console.log(row);
+                    // try {
+                    //     const response = await axios.post('/files/delete', { filename: row.filename }, {
+                    //         headers: {
+                    //             Authorization: localStorage.getItem('token')
+                    //         }
+                    //     });
+                    //     if (response.status === 200) {
+                    //         this.$message({
+                    //             message: '删除成功',
+                    //             type: 'success'
+                    //         });
+                    //         // 刷新文件列表
+                    //         this.fileList = this.fileList.filter(file => file.filename != row.filename)
+                    //         if (row.filename == this.rFilename) this.rFilename = null;//若删除的是选择的的文件，解除选中
+                    //         // this.getFileList();
+                    //     } else {
+                    //         this.$message.error('删除失败')
+                    //     }
+                    // } catch (error) {
+                    //     // this.$message.error('删除失败')
+                    // }
+                },
+                // 打印
                 async printFile() {
                     if (!this.rFilename) {
                         return this.$message({
-                            message: '请先上传文件',
+                            message: '请先选择文件',
                             type: 'warning'
                         });
                     }
@@ -207,6 +249,10 @@
                             }
                         });
                         if (response.status === 200) {
+                            // 获取页数
+                            this.pages = response.data.pages;
+                            console.log("pages:" + this.pages);
+
                             this.$message({
                                 message: '打印成功',
                                 type: 'success'
@@ -220,26 +266,26 @@
                     }
                 },
                 async login() {
-                    window.location.href = "/login.html"
+                    window.location.href = "./login.html"
                 },
                 async getFileList() {
                     try {
-                        const response = await axios.get('/files', {
+                        const response = await axios.get('/files/all', {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
                         });
                         if (response.status === 200) {
                             this.$message({
-                                message: '获取成功',
+                                message: '文件获取成功',
                                 type: 'success'
                             });
                             this.fileList = response.data;
                         } else {
-                            this.$message.error('获取失败')
+                            this.$message.error('文件获取失败')
                         }
                     } catch (error) {
-                        this.$message.error('获取失败')
+                        this.$message.error('文件获取失败')
                     }
                 },
                 logout() {
@@ -250,6 +296,7 @@
                     localStorage.removeItem('token');
                     this.isLogin = 0;
                 }
+
             },
             async mounted() {
                 try {
@@ -264,7 +311,9 @@
                             type: 'success'
                         });
                         this.isLogin = 1;
-                        this.username = response.data;
+                        this.username = response.data.username;
+                        // 刷新文件列表
+                        this.getFileList();
                     } else {
                         // this.$message.error('失败')
                     }
@@ -272,6 +321,7 @@
                     // this.$message.error('获取失败')
                 }
             }
+
         });
     </script>
 </body>

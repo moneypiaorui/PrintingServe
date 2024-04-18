@@ -7,12 +7,12 @@ const router = express.Router();
 
 // 需要身份验证的路由
 router.get('/protected', authMiddleware, (req, res) => {
-    res.json({ message: '您已成功通过身份验证', user: req.user });
+    res.json({ message: '您已成功通过身份验证', username: req.username });
 });
 
 // 需要管理员权限的路由
 router.get('/admin', authMiddleware, (req, res) => {
-    if (req.user.role !== 'admin') {
+    if (req.userRole !== 'admin') {
         return res.status(403).json({ message: '您没有访问权限' });
     }
 

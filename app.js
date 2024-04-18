@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fileWatcher = require('./components/fileWatcher.js');
 const upload_router = require('./router/uploadRouter');
-const flie_list_router = require('./router/getFileList.js');
+const flieRouter = require('./router/fileRouter.js');
 const print_router = require('./router/printRouter');
 const users_router = require('./router/users.js');
 const protected_router = require('./protectedRouter');
@@ -12,6 +12,7 @@ const vertify_router = require('./router/vertify.js')
 
 const app = express();
 app.use(cors());
+// app.use(express.urlencoded({ extended: true }));
 
 // 设置静态文件目录
 app.use(express.static('public'));
@@ -27,8 +28,8 @@ app.use('/upload', upload_router);
 // 打印
 app.use('/print', print_router);
 // 获取文件列表
-app.use('/files', flie_list_router);
-// token认证
+app.use('/files', flieRouter);
+// token认证获取username
 app.use('/vertify',vertify_router);
 // 启动服务器
 app.listen(3000, () => {

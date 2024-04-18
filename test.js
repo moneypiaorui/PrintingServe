@@ -1,62 +1,37 @@
+const Docxtemplater = require('docxtemplater');
+const fs = require('fs');
+const Printer = require('printer');
 
-const express = require('express');
-const multer = require('multer');
-const sqlite3 = require('sqlite3').verbose();
-const authMiddleware = require('./components/authMiddleware');
-const jwt = require('jsonwebtoken');
-const db = require("./components/database");
+// 定义要打印的 .docx 文件路径
+const docxFilePath = '/path/to/your/document.docx';
 
+// 读取 .docx 文件内容
+const content = fs.readFileSync(docxFilePath, 'binary');
 
-const app = express.Router();
+// 使用 docxtemplater 解析 .docx 文件内容
+const docx = new Docxtemplater();
+docx.loadZip(content);
+const data = {
+    // 这里可以是你想要替换的内容，例如：
+    // name: 'John Doe',
+    // age: 30,
+    // ...
+};
+docx.setData(data);
+docx.render();
 
+// 获取解析后的内容
+const printableContent = docx.getZip().generate({type: 'nodebuffer'});
 
-
-
-
-// 注册新用户
-app.post('/register', (req, res) => {
-    const { username, password } = req.body;
-    db.get(`SELECT * FROM users WHERE username = ?`, [username], function (err, row) {
-        if (err) {
-            console.error(err.message);
-            return;
-        }
-        if (row) {
-            console.log(`用户名已存在`);
-        } else {
-            db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, bcrypt.hashSync(password, 10)], function (err) {
-                if (err) {
-                    res.status(500).send(err.message);
-                } else {
-                    res.status(200).send("注册成功");
-                }
-            });
-        }
-    })
+// 打印解析后的内容
+Printer.printDirect({
+    data: printableContent,
+    printer: 'YourPrinterName',
+    type: 'DOCX',
+    success: (jobID) => {
+        console.log(`Document printed successfully with job ID: ${jobID}`);
+    },
+    error: (err) => {
+        console.error('Error occurred while printing:', err);
+    }
 });
-
-// 用户登录
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    db.get(`SELECT * FROM users WHERE username = ?`, [username], function (err, row) {
-        if (err) {
-            res.status(500).send(err.message);
-            return;
-        }
-        if (!row) {
-            res.status(409).send(`用户不存在`);
-        } else {
-            // 验证密码
-            if (!bcrypt.compareSync(password, row.password)) {
-                return res.status(401).json({ message: '用户名或密码错误' });
-            }
-            // 生成令牌
-            const token = jwt.sign({ username: row.username }, 'secret_key', { expiresIn: '24h' });
-            res.json({ token });
-        }
-    })
-
-});
-
-
-module.exports = app;
