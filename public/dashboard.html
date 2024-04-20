@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management</title>
+  <!-- 引入 Vue.js -->
+  <script src="./js/vue.min.js"></script>
+
+  <script src="./js/axios.min.js"></script>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <style>
+    h1 {
+      text-align: center;
+      color: #409EFF;
+      font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" style="width: 100%;max-width: 800px;margin: auto auto;">
+    <h1>用户管理</h1>
+
+    <!-- 表格显示用户列表 -->
+    <el-table :data="users" style="">
+      <el-table-column prop="id" label="ID" width="50px"></el-table-column>
+      <el-table-column prop="username" label="用户名"></el-table-column>
+      <el-table-column prop="userRole" label="权限"></el-table-column>
+      <el-table-column label="操作" width="155">
+        <template slot-scope="scope">
+          <el-button type="primary" @click="editUser(scope.row)">编辑</el-button>
+          <el-popover placement="top-end" width="160" v-model="visible[scope.$index]">
+            <p>确定删除吗？</p>
+            <div style="text-align: right; margin: 0">
+              <el-button size="mini" type="text" @click="$set(visible,scope.$index,false)">取消</el-button>
+              <el-button type="danger" size="mini"
+                @click="$set(visible,scope.$index,false);deleteUser(scope.row)">确定</el-button>
+            </div>
+            <el-button slot="reference" class="el-icon-delete" type="danger"></el-button>
+          </el-popover>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 添加用户表单 -->
+    <el-dialog :visible.sync="addDialogVisible" title="添加用户" width="70%">
+      <el-form :model="userForm" label-width="80px">
+        <el-form-item label="用户名">
+          <el-input v-model="userForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="权限">
+          <el-select v-model="userForm.userRole" placeholder="选择用户身份">
+            <el-option label="管理员" value="admin"></el-option>
+            <el-option label="普通用户" value="user"></el-option>
+            <el-option label="访客" value="guest" :disabled="true"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="userForm.password"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="addUser">确定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 添加用户按钮 -->
+    <el-button style="margin: 10px 10px;" type="primary" @click="addDialogVisible = true">添加用户</el-button>
+  </div>
+  <script>
+
+    const app = new Vue({
+      el: '#app',
+      data() {
+        return {
+          user: null,
+          users: [], // 用户列表
+          addDialogVisible: false, // 是否显示添加用户对话框
+          userForm: {
+            username: '',
+            password: '',
+            userRole: ''
+
+          },
+          visible: []
+        };
+      },
+      methods: {
+        // 添加用户
+        addUser() {
+          // 在这里调用后端 API 将用户添加到数据库
+          axios.post('/manage/add', this.userForm, {
+            headers: {
+              // 自定义请求头
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(response => {
+            // this.users = response.data;
+            this.$message({
+              message: '添加成功',
+              type: 'success'
+            });
+            // 然后将用户添加到 users 数组中
+            this.users.push({ id: this.users.length + 1, ...this.userForm });
+            this.addDialogVisible = false;
+          }).catch(error => {
+            this.$message.error('添加失败');
+          })
+
+        },
+        // 编辑用户
+        editUser(user) {
+          // 在这里实现编辑用户的逻辑
+          console.log('编辑用户', user);
+        },
+        // 删除用户
+        deleteUser(row) {
+          // 在这里调用后端 API 将用户从数据库中删除
+          if (row.username == this.user.username) {
+            this.$message.error('无法删除当前登录账号');
+            return console.log("无法删除当前登录账号")
+          }
+          axios.post('/manage/delete', { rUsername: row.username }, {
+            headers: {
+              // 自定义请求头
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(response => {
+            // 然后从 users 数组中移除对应的用户
+            this.users = this.users.filter(user => user.username !== row.username);
+            this.$message({
+              message: '删除成功',
+              type: 'success'
+            });
+          }).catch(error => {
+            this.$message.error('删除失败');
+          })
+
+        }
+      },
+      async mounted() {
+        try {
+          const response = await axios.get('/vertify', {
+            headers: {
+              Authorization: localStorage.getItem('token')
+            }
+          });
+          if (response.status === 200) {
+            this.$message({
+              message: '自动登录成功',
+              type: 'success'
+            });
+            this.user = response.data;
+            // 在组件加载完成后加载用户列表
+            axios.get('/manage/allUsers', {
+              headers: {
+                // 自定义请求头
+                'Authorization': localStorage.getItem('token')
+              }
+            }).then(response => {
+              this.users = response.data;
+            }).catch(error => {
+              this.$message.error('获取失败');
+            })
+          } else {
+            // this.$message.error('失败')
+          }
+        } catch (error) {
+          // this.$message.error('获取失败')
+        }
+
+      }
+    });
+  </script>
+</body>
+
+</html>

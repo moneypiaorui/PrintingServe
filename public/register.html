@@ -144,6 +144,7 @@
             return {
                 username: '',
                 password: '',
+                userRole:'user',
                 check: ''
             };
         },
@@ -152,24 +153,24 @@
         },
         methods: {
             async register() {
-                // 发送登录请求到后端
+                // 发送注册请求到后端
                 try {
                     if (this.password != this.check) {
                         this.al.innerHTML = "两次密码不同";
                         this.showAlert2();
                     } else {
                         const response = await axios.post('/users/register', {
-                            username: this.username,
-                            password: this.password
+                            username:this.username,
+                            password:this.password,
+                            userRole:this.userRole
                         });
-                        // 处理登录成功的逻辑，如保存登录状态等
+                        // 处理注册成功的逻辑
                         this.al.innerHTML = "注册成功";
                         this.showAlert1();
                         setTimeout(() => {
                             window.location.href = "./login.html";
                         }, 800)
                         console.log(response.data);
-                        localStorage.setItem('token', response.data.token);
                     }
 
                 } catch (error) {

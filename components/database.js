@@ -9,13 +9,16 @@ const db = new sqlite3.Database('user.db', (err) => {
     console.log("Connected to the SQLite database.");
 });
 
-db.serialize(() => {
-    db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)");
-});
+//启用外键约束
+    db.run("PRAGMA foreign_keys = ON");
 
 // 创建文件表
 db.serialize(() => {
-    db.run("CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY, filename TEXT, username TEXT, FOREIGN KEY(username) REFERENCES users(username))");
+    db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, userRole TEXT)");
+    db.run("CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY, username TEXT, filename TEXT,timestamp INTEGER, FOREIGN KEY(username) REFERENCES users(username))");
+    
 });
+
+
 
 module.exports = db;

@@ -17,6 +17,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            overflow: hidden;
         }
 
         h1 {
@@ -79,13 +80,13 @@
             <i class = "el-icon-user-solid"></i>
           </el-tooltip> -->
         <h1>文件上传和打印</h1>
-        <el-table  @cell-click="(row,column)=>{if(column.label=='文件名')rFilename= row.filename;}" :row-class-name="tableRowClassName" :data="fileList"
+        <el-table  @cell-click="(row,column)=>{if(column.label=='文件名')rFile= row;}" :row-class-name="tableRowClassName" :data="fileList"
             style="width: 400px" max-height="250">
             <el-table-column prop="filename" label="文件名">
             </el-table-column>
             <el-table-column align="center" width="50px" label="操作" >
                 <template slot-scope="scope" >
-                    <el-popover  placement="top" width="160" v-model="visible[scope.$index]">
+                    <el-popover  placement="top-end" width="160" v-model="visible[scope.$index]">
                         <p>确定删除吗？</p>
                         <div style="text-align: right; margin: 0">
                             <el-button size="mini"  type="text" @click="$set(visible,scope.$index,false)">取消</el-button>
@@ -95,7 +96,6 @@
                          ></el-button>
                     </el-popover>
                 </template>
-
             </el-table-column>
         </el-table>
         <div class="file-input">
@@ -107,7 +107,7 @@
             </el-upload>
         </div>
         <div class="button-container">
-            <el-button type="primary" v-on:click="printFile">打印</el-button>
+            <el-button type="primary" v-on:click="printFile" size = "large" icon="el-icon-printer"></el-button>
             <el-button type="primary" v-on:click="getFileList">所有文件</el-button>
             <el-button type="danger" v-on:click="logout" v-if="isLogin">登出</el-button>
             <el-button type="primary" v-on:click="login" v-else>登录</el-button>
@@ -121,7 +121,7 @@
                     isLogin: 0,
                     username: '',
                     file: null,
-                    rFilename: null,
+                    rFile: {timestamp:null},
                     error: null,
                     //上传后的文件列表
                     fileList: [],
@@ -138,7 +138,7 @@
             },
             methods: {
                 tableRowClassName({ row, rowIndex }) {
-                    if (row.filename === this.rFilename) {
+                    if (row.timestamp === this.rFile.timestamp) {
                         return 'selected-row';
                     }
                     return '';
@@ -157,10 +157,10 @@
                         }
                         //如果文件类型不在允许上传的范围内
                         if (this.fileType.includes(FileExt)) {
-                            console.log("上传文件合法");
+                            console.log(`${file.name}文件格式合法`);
                             return true;
                         } else {
-                            this.$message.error("上传文件格式不正确!");
+                            this.$message.error(`文件格式不正确!`);
                             return false;
                         }
                     }
@@ -176,9 +176,7 @@
                 async uploadFile(item) {
                     this.file = item.file
                     const formData = new FormData();
-                    // formData.append('file', this.file);
                     formData.append('file', this.file, encodeURIComponent(this.file.name));
-                    console.log(this.file.name);
                     try {
                         const response = await axios.post('/upload', formData, {
                             headers: {
@@ -192,7 +190,7 @@
                             });
                             // 刷新文件列表
                             // this.getFileList()
-                            this.fileList.push({ filename: item.file.name });
+                            this.fileList.push(response.data);
                         } else {
                             this.$message.error('上传失败')
 
@@ -204,7 +202,7 @@
                 // 删除
                 async handleDelete(index, row) {
                     try {
-                        const response = await axios.post('/files/delete', { filename: row.filename }, {
+                        const response = await axios.post('/files/delete', row, {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
@@ -215,9 +213,8 @@
                                 type: 'success'
                             });
                             // 刷新文件列表
-                            this.fileList = this.fileList.filter(file => file.filename != row.filename)
-                            if (row.filename == this.rFilename) this.rFilename = null;//若删除的是选择的的文件，解除选中
-                            // this.getFileList();
+                            this.fileList = this.fileList.filter(file => file.timestamp != row.timestamp)
+                            if (row.timestamp == this.rFile.timestamp) this.rFile = {timestamp:null};//若删除的是选择的的文件，解除选中
                         } else {
                             this.$message.error('删除失败')
                         }
@@ -227,18 +224,15 @@
                 },
                 // 打印
                 async printFile() {
-                    if (!this.rFilename) {
+                    if (!this.rFile) {
                         return this.$message({
                             message: '请先选择文件',
                             type: 'warning'
                         });
                     }
-                    const data = {
-                        filename: this.rFilename,
-                    };
 
                     try {
-                        const response = await axios.post('/print', data, {
+                        const response = await axios.post('/print', this.rFile, {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
@@ -263,9 +257,10 @@
                 async login() {
                     window.location.href = "./login.html"
                 },
+                // 获取所有文件的文件名
                 async getFileList() {
                     try {
-                        const response = await axios.get('/files/all', {
+                        const response = await axios.get('/files/allFiles', {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
@@ -290,6 +285,9 @@
                     });
                     localStorage.removeItem('token');
                     this.isLogin = 0;
+                    setTimeout(()=>{
+                        location.reload();
+                    },1000);
                 }
 
             },

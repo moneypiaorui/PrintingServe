@@ -10,29 +10,34 @@ const authMiddleware = require('../components/authMiddleware');
 
 // 处理打印操作的路由
 printRouter.post('/', authMiddleware, (req, res) => {
-    const { filename } = req.body;
+    const { filename ,timestamp} = req.body;
+    const completeFilename = `${timestamp}-${filename}`;
     // 执行打印操作的逻辑
     if (filename) {
-        const filePath = path.join(__dirname, '../uploads', filename);
+        const filePath = path.join(__dirname, '../uploads', completeFilename);
 
         printer
             .print(filePath, {
                 printDialog: 0,
-                monochrome :1,//黑白打印
-                copies:1
+                monochrome: 1,//黑白打印
+                copies: 1
             })
             .then(() => {
-                getPageCount(filePath)
-                    .then(pageCount => {
-                        
-                        console.log(`${pageCount}`);
-                        res.status(200).json({message:'文件已发送到打印机进行打印',pages:pageCount});
-                    })
-                    .catch(err => {
-                        res.status(200).json({message:'文件已发送到打印机进行打印',err:"获取pdf页数时出错", pages:0});
-                        console.error('获取 PDF 文件页数时出错：', err);
-                    });
-                
+                console.log(`文件${completeFilename}已打印`);
+                if (path.extname(filename) == ".pdf") {
+                    getPageCount(filePath)
+                        .then(pageCount => {
+                            // console.log(`${pageCount}`);
+                            res.status(200).json({ message: '文件已发送到打印机进行打印', pages: pageCount });
+                        })
+                        .catch(err => {
+                            res.status(200).json({ message: '文件已发送到打印机进行打印', err: "获取pdf页数时出错", pages: 0 });
+                            console.error('获取 PDF 文件页数时出错：', err);
+                        });
+                } else {
+                    res.status(200).json({ message: '文件已发送到打印机进行打印', err: "不是PDF", pages: 1 });
+                }
+
             })
             .catch((err) => {
                 console.error('打印失败:', err);
