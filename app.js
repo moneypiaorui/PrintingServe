@@ -10,6 +10,7 @@ const users_router = require('./router/users.js');
 const protected_router = require('./protectedRouter');
 const vertify_router = require('./router/vertify.js')
 const manageRouter = require('./router/manageRouter.js')
+const backgroud = require('./components/backgroud.js')
 
 const app = express();
 app.use(cors());
@@ -34,6 +35,8 @@ app.use('/files', flieRouter);
 app.use('/vertify',vertify_router);
 // 管理路由
 app.use('/manage',manageRouter);
+
+app.use('/backgroud',backgroud);
 // 启动服务器
 app.listen(3000, () => {
     console.log('服务器已启动，监听端口 3000');
