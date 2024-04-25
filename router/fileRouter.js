@@ -42,25 +42,29 @@ fileListRouter.post('/delete', authMiddleware, (req, res) => {
 
 });
 
-fileListRouter.get('/preview', async (req, res) => {
+fileListRouter.get('/preview', authMiddleware, async (req, res) => {
     const { timestamp, filename } = req.query;
     const completeFilename = `${timestamp}-${filename}`;
     const ext = path.extname(filename);
     let filePath = path.join(__dirname, '../uploads', completeFilename);
     if (filename) {
-        if (ext == ".doc" || ext == '.docx') {
-            await wordToPdf(filePath, filePath + '.pdf');
-            filePath = filePath + '.pdf';
-        }
-        // 使用文件流读取 PDF 文件
-        const fileStream = fs.createReadStream(filePath);
-        // 设置响应头，指定响应内容为 PDF 文件
-        res.setHeader('Content-Type', 'application/pdf');
-        // 将 PDF 文件流通过管道写入响应中
-        await fileStream.pipe(res);
-        if (ext == ".doc" || ext == '.docx') {
-            fs.unlink(filePath, (err) => {});
-        }
+        await wordToPdf(filePath, filePath + '.pdf');
+        filePath = filePath + '.pdf';
+        
+        // // 使用文件流读取文件
+        // const fileStream = fs.createReadStream(filePath);
+        // // 设置响应头，指定响应内容
+        // res.setHeader('Content-Type', 'application/pdf');
+        // // 将文件流通过管道写入响应中
+        // await fileStream.pipe(res);
+
+        await res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('Error sending file:', err);
+                res.status(err.status).end();
+            } 
+            fs.unlink(filePath, (err) => { });
+        });
     } else {
         res.status(400).send('未选择文件');
     }

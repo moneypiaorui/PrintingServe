@@ -12,119 +12,12 @@
     <!-- 引入组件库 -->
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
 
-    <style>
-        ::-webkit-scrollbar {
-            display: none;
-        }
-
-        body {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            padding: 0 0;
-            margin: 0 0 ;
-            font-family: Arial, sans-serif;
-            z-index: -5;
-        }
-
-        #app {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-repeat: no-repeat;
-            background-size: cover;
-            background-color: rgb(165, 182, 202);
-            z-index: -2;
-        }
-
-        .blur {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-size: cover;
-            /* filter: blur(2px); */
-            z-index: -1;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 540px;
-            margin: 150px auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(4px) brightness(120%);
-            border-radius: 40px;
-
-            box-shadow: 30px 30px 30px -10px rgba(0, 0, 0, .15),
-                inset 12px 12px 10px rgba(255, 255, 255, .5),
-                -15px -15px 35px rgba(255, 255, 255, .4),
-                inset -1px -1px 10px rgba(0, 0, 0, .2);
-            /* box-shadow: 20px 20px 20px 0px rgba(0, 0, 0, .15), inset -20px -20px 14px 0px rgba(255, 255, 255, .5), inset 20px 20px 20px rgb(0 0 0 / 40%), -20px -20px 20px rgb(255 255 255 / 20%); */
-        }
-
-        .container>div {
-            margin-bottom: 30px;
-            border-radius: 10px;
-        }
-
-        .file-list {
-            opacity: 0.8;
-            width: 380px;
-        }
-
-        .file-input {
-            opacity: 0.8;
-            margin-bottom: 20px;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: center;
-        }
-
-        .button-container button {
-            margin: 0 10px;
-        }
-
-        .success-message {
-            text-align: center;
-            margin-top: 20px;
-            color: green;
-        }
-
-        .error-message {
-            text-align: center;
-            margin-top: 20px;
-            color: red;
-        }
-
-        h1 {
-            /* text-align: center; */
-            color: #409EFF;
-            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
-        }
-
-        iframe {
-            width: 95%;
-            height: 70vh;
-            display: block;
-            margin: 0 auto;
-        }
-    </style>
+    <link rel="stylesheet" href="./css/index.css">
 </head>
 
 <body>
     <div id="app">
-        <div :style="{'background-image':'url(' + backgroundImage + ')'}" class="blur"></div>
+        <div class="blur"></div>
         <div class="container">
             <h1>文件上传和打印</h1>
             <!-- <el-tooltip class="item" effect="dark" content="Bottom Center 提示文字" placement="bottom-end" color = "blue">
@@ -150,6 +43,7 @@
                     </template>
                 </el-table-column>
             </el-table>
+            <!-- 文件上传 -->
             <div class="file-input">
                 <el-upload class="upload-demo" :limit="fileLimit" drag action="/upload" multiple
                     :on-exceed="handleExceed" :before-upload="beforeUpload" :http-request="uploadFile">
@@ -158,20 +52,33 @@
                     <div class="el-upload__tip" slot="tip">只能上传{{fileType.join('/')}}文件，且不超过50mb</div>
                 </el-upload>
             </div>
+            <!-- 底部按钮 -->
             <div class="button-container">
-                <el-button type="primary" v-on:click="printFile" size="large" icon="el-icon-printer"></el-button>
-                <el-button type="primary" v-on:click="handlePreview">预览</el-button>
-                <el-button type="danger" v-on:click="logout" v-if="isLogin">登出</el-button>
-                <el-button type="primary" v-on:click="login" v-else>登录</el-button>
+                <el-button type="primary" @click="handlePrint" size="large" icon="el-icon-printer"></el-button>
+                <el-button type="primary" @click="handlePreview">预览</el-button>
+                <el-button type="danger" @click="logout" v-if="isLogin">登出</el-button>
+                <el-button type="primary" @click="login" v-else>登录</el-button>
             </div>
         </div>
 
-        <el-dialog title="预览" top = '5vh' :visible.sync="dialogVisible" width="80vw" modal = '1' modal-append-to-body = '1' append-to-body = 1
-            :before-close="console.log('dialog close')">
+        <!-- 预览对话框 -->
+        <el-dialog title="预览" top='5vh' :visible.sync="previewDialogVisible" width="80vw" modal='1'
+            modal-append-to-body='1' append-to-body=1
+            :before-close="()=>{previewDialogVisible = 0;window.URL.revokeObjectURL(previewSrc)}">
             <iframe title="preview" :src="previewSrc" frameborder="0"></iframe>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="window.open(previewSrc)">新窗口打开</el-button>
-                <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+                <el-button type="primary"
+                    @click="previewDialogVisible = false; window.URL.revokeObjectURL(previewSrc);">确 定</el-button>
+            </span>
+        </el-dialog>
+        <!-- 打印预览 -->
+        <el-dialog title="打印预览" top='5vh' :visible.sync="printDialogVisible" width="80vw" modal='1'
+            modal-append-to-body='1' append-to-body=1 :before-close="()=>{previewClose}">
+            <iframe title="printPreview" :src="previewSrc" frameborder="0"></iframe>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="previewClose">取消</el-button>
+                <el-button type="primary" @click="printFile();previewClose(); ">确定</el-button>
             </span>
         </el-dialog>
     </div>
@@ -182,6 +89,7 @@
                 return {
                     isLogin: 0,
                     username: '',
+                    userRole:'',
                     file: null,
                     rFile: { timestamp: null },
                     error: null,
@@ -196,11 +104,9 @@
                     // 文件页数
                     pages: 0,
                     visible: [],
-                    dialogVisible: 0,
-                    previewSrc: '',
-                    windowWidth: window.innerWidth,
-                    mobileBackgroundImageUrl: '',
-                    desktopBackgroundImageUrl: '',
+                    previewDialogVisible: 0,
+                    printDialogVisible: 0,
+                    previewSrc: ''
                 };
             },
             methods: {
@@ -283,47 +189,72 @@
                         // this.$message.error('删除失败')
                     }
                 },
-                async handlePreview() {
+                getPreview() {
                     if (!this.rFile.timestamp) {
-                        return this.$message({
+                        this.$message({
                             message: '请先选择文件',
                             type: 'warning'
                         });
+                        throw new Error('请先选择文件');
                     }
-                    try {
-                        const response = await axios.get('/files/preview', {
-                            params: this.rFile,
-                            responseType: 'blob', // 指定响应类型为二进制流
-                            headers: {
-                                Authorization: localStorage.getItem('token')
-                            }
-                        });
-                        // 打开预览框
-                        this.dialogVisible = 1;
-                        // 创建一个 Blob 对象，并将获取到的二进制数据放入其中
-                        const blob = new Blob([response.data], { type: 'application/pdf' });
-                        // 创建一个 URL 对象，用于访问 Blob 数据
-                        const url = window.URL.createObjectURL(blob);
-                        this.previewSrc = url;
-                        // window.open(url)
+                    // 直链，由于token认证的中间件无法获取文件
+                    // const url = new URL('/files/preview', window.location.origin);
+                    // url.search = new URLSearchParams(this.rFile).toString();
+                    // this.previewSrc = url;
 
-                        // // 创建一个 <a> 元素，设置下载链接，并模拟点击下载
+                    return axios.get('/files/preview', {
+                        params: this.rFile,
+                        responseType: 'blob', // 指定响应类型为二进制流
+                        headers: {
+                            Authorization: localStorage.getItem('token')
+                        }
+                    }).then(response => {
+                        // const blob = new Blob([response.data], { type: response.headers['content-type'] });
+                        this.previewSrc = window.URL.createObjectURL(response.data);
+
                         // const link = document.createElement('a');
                         // link.href = url;
                         // link.download =  this.rFile.filename+'.pdf'; // 设置下载文件的文件名
                         // document.body.appendChild(link);
                         // link.click();
-                        // // 释放 URL 对象
+
                         // window.URL.revokeObjectURL(url);
+                    });
+                },
+                previewClose() {
+                    window.URL.revokeObjectURL(this.previewSrc);
+                    this.previewDialogVisible = false;
+                    this.printDialogVisible = false;
+                },
+                async handlePreview() {
+                    try {
+                        await this.getPreview();
                         this.$message({
                             message: '预览获取成功',
                             type: 'success'
                         });
-                    } catch (error) {
-                        console.error('获取文件时出现错误:', error);
+                        // 打开预览框
+                        this.previewDialogVisible = 1;
+                    } catch (err) {
+                        console.log(err);
                     }
+
                 },
                 // 打印
+                async handlePrint() {
+                    try {
+                        await this.getPreview();
+                        this.$message({
+                            message: '预览获取成功',
+                            type: 'success'
+                        });
+                        // 打开预览框
+                        this.printDialogVisible = 1;
+                    } catch (err) {
+                        console.log(err);
+                    }
+
+                },
                 async printFile() {
                     if (!this.rFile.timestamp) {
                         return this.$message({
@@ -343,8 +274,22 @@
                             console.log("pages:" + this.pages);
 
                             this.$message({
-                                message: '打印成功',
+                                message: `打印成功,共${this.pages}页`,
                                 type: 'success'
+                            });
+                            const h = this.$createElement;//
+                            this.$msgbox({
+                                title: '已通知打印机',
+                                message: h('p', null, [
+                                    h('p', null, `一共${this.pages}张，每张0.1元，共${this.pages * 0.1}元`),
+                                    h('p', null, [
+                                        h('img', { style: 'width:50%', attrs: { src: './img/Receive1.jpg' } }, ''),
+                                        h('img', { style: 'width:50%', attrs: { src: './img/Receive2.jpg' } }, '')
+                                    ])
+                                ]),
+                                confirmButtonText: '我知道了',
+                            }).then(action => {
+                                console.log(action);
                             });
                         } else {
                             this.$message.error('打印失败');
@@ -392,45 +337,49 @@
 
             },
             computed: {
-                // 根据屏幕宽度动态选择背景图片地址
-                backgroundImage() {
-                    return this.windowWidth <= 1080 ? this.mobileBackgroundImageUrl : this.desktopBackgroundImageUrl;
-                },
+
             },
             created() {
-                window.addEventListener('resize', () => {
-                    this.windowWidth = window.innerWidth;
-                });
-                axios.get('/backgroud', {
-                    // 'Content-Type': 'application/json'
-                }).then((result) => {
-                    // console.log(result.data)
-                    this.desktopBackgroundImageUrl = result.data[0];
-                    this.mobileBackgroundImageUrl = result.data[1];
-                })
+
             },
             async mounted() {
-                try {
-                    const response = await axios.get('/vertify', {
-                        headers: {
-                            Authorization: localStorage.getItem('token')
-                        }
+                if (localStorage.getItem("token") == null) {
+                    return this.$notify({
+                        title: '警告',
+                        message: '您没有登陆',
+                        type: 'warning',
+                        duration: 0
                     });
-                    if (response.status === 200) {
-                        this.isLogin = 1;
-                        this.username = response.data.username;
-                        this.$message({
-                            message: '欢迎登录, 用户' + this.username,
-                            type: 'success'
+                } else {
+                    try {
+                        const response = await axios.get('/vertify', {
+                            headers: {
+                                Authorization: localStorage.getItem('token')
+                            }
                         });
-                        // 刷新文件列表
-                        await this.getFileList();
-                    } else {
-                        // this.$message.error('失败')
+                        if (response.status === 200) {
+                            this.isLogin = 1;
+                            ({username:this.username,userRole:this.userRole} = response.data)
+                            this.$message({
+                                message: '欢迎登录, 用户' + this.username,
+                                type: 'success'
+                            });
+                            // 刷新文件列表
+                            await this.getFileList();
+                        } else {
+                            this.$notify({
+                                title: '警告',
+                                message: 'Token已过期，请重新登陆',
+                                type: 'warning',
+                                duration: 0
+                            });
+                        }
+                    } catch (error) {
+                        // this.$message.error('获取失败')
                     }
-                } catch (error) {
-                    // this.$message.error('获取失败')
                 }
+
+
                 const h = this.$createElement;//
                 this.$msgbox({
                     title: '重要通知',

@@ -6,36 +6,39 @@ const fs = require('fs').promises;
 const printRouter = express.Router();
 const authMiddleware = require('../components/authMiddleware');
 const wordToPdf = require('../components/officeToPdf');
-
-
+const db = require('../components/database');
 
 // 处理打印操作的路由
-printRouter.post('/', authMiddleware, async(req, res) => {
+printRouter.post('/', authMiddleware, async (req, res) => {
     const { filename, timestamp } = req.body;
     const completeFilename = `${timestamp}-${filename}`;
     // 执行打印操作的逻辑
     if (filename) {
         let filePath = path.join(__dirname, '../uploads', completeFilename);
         const ext = path.extname(filename);
-        // 转化doc和docx
-        if (ext == ".doc" || ext == '.docx') {
-            await wordToPdf(filePath, filePath + '.pdf');
-            filePath = filePath + '.pdf';
-        }
+        // 转化成pdf
+        await wordToPdf(filePath, filePath + '.pdf');
+        filePath = filePath + '.pdf';
         printer
             .print(filePath, {
                 printDialog: 0,
                 monochrome: 1,//黑白打印
                 copies: 1
             })
-            .then(() => {
+            .then(async () => {
                 console.log(`文件${completeFilename}已打印`);
-
                 if (path.extname(filePath) == ".pdf") {
-                    getPageCount(filePath)
+                    await getPageCount(filePath)
                         .then(pageCount => {
-                            // console.log(`${pageCount}`);
                             res.status(200).json({ message: '文件已发送到打印机进行打印', pages: pageCount });
+                            db.run(`INSERT INTO printLogs (filename, username, printTimestamp,pages) VALUES (?, ?, ?, ?)`, [filename, req.username, Date.now(), pageCount], function (err) {
+                                if (err) {
+
+                                } else {
+
+                                }
+                            })
+
                         })
                         .catch(err => {
                             res.status(200).json({ message: '文件已发送到打印机进行打印', err: "获取pdf页数时出错", pages: 0 });
@@ -44,9 +47,7 @@ printRouter.post('/', authMiddleware, async(req, res) => {
                 } else {
                     res.status(200).json({ message: '文件已发送到打印机进行打印', err: "不是PDF", pages: 1 });
                 }
-                if (ext == ".doc" || ext == '.docx') {
-                    fs.unlink(filePath, (err) => {});
-                }
+                fs.unlink(filePath, (err) => { });
             })
             .catch((err) => {
                 console.error('打印失败:', err);

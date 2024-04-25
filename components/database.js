@@ -16,7 +16,7 @@ const db = new sqlite3.Database('user.db', (err) => {
 db.serialize(() => {
     db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, userRole TEXT)");
     db.run("CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY, username TEXT, filename TEXT,timestamp INTEGER, FOREIGN KEY(username) REFERENCES users(username))");
-    
+    db.run("CREATE TABLE IF NOT EXISTS printLogs (id INTEGER PRIMARY KEY, username TEXT, filename TEXT,printTimestamp INTEGER, pages INTEGER)");
 });
 
 
