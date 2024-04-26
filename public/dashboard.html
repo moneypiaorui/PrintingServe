@@ -14,6 +14,18 @@
   <!-- 引入组件库 -->
   <script src="https://unpkg.com/element-ui/lib/index.js"></script>
   <style>
+    body {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 0 0;
+      margin: 0 0;
+      font-family: Arial, sans-serif;
+      z-index: -5;
+    }
+
     h1 {
       text-align: center;
       width: 100%;
@@ -26,18 +38,25 @@
       max-width: 300px;
       min-width: 150px;
     }
+
+    .el-tab-users {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      height: 95vh;
+    }
   </style>
 </head>
 
 <body>
   <div id="app" style="width: 100%;margin: auto auto;">
-    <el-tabs type="border-card" tab-position="left" style="height: 95vh;">
-      
-      <el-tab-pane style="display: flex; flex-direction: column;align-items:flex-start; height: 90vh;">
+    <el-tabs type="border-card" tab-position="left" style="height: 100vh;">
+
+      <el-tab-pane class="el-tab-users">
         <span slot="label"><i class="el-icon-user"></i> 用户管理</span>
         <h1>用户管理</h1>
         <!-- 表格显示用户列表 -->
-        <el-table height ="0" :data="users">
+        <el-table height="90%" :data="users" style="flex-grow:1">
           <el-table-column prop="id" label="ID" width="40"></el-table-column>
           <el-table-column prop="username" label="用户名"></el-table-column>
           <el-table-column prop="userRole" label="权限"></el-table-column>
@@ -82,11 +101,27 @@
           </div>
         </el-dialog>
       </el-tab-pane>
-      <el-tab-pane>
-        <span slot="label"><i class="el-icon-document"></i> 打印记录</span>
+
+      <el-tab-pane class="el-tab-users">
+        <span slot="label"><i class="el-icon-document"></i>打印记录</span>
+        <h1>打印记录</h1>
+        <div>
+          <el-date-picker v-model="dateTimePick" type="datetimerange" range-separator="至" start-placeholder="开始日期"
+            end-placeholder="结束日期">
+          </el-date-picker>
+          <el-button type="primary" @click="getPrintLogs">查询</el-button>
+        </div>
+        <!-- 表格显示打印列表 -->
+        <el-table height="90%" show-summary :data="printLogs">
+          <el-table-column prop="printTimestamp" label="时间"></el-table-column>
+          <el-table-column prop="username" label="用户"></el-table-column>
+          <el-table-column prop="filename" label="文件"></el-table-column>
+          <el-table-column prop="pages" label="页数"></el-table-column>
+        </el-table>
       </el-tab-pane>
       <el-tab-pane>
         <span slot="label"><i class="el-icon-folder-opened"></i> 文件管理</span>
+        <h1>文件管理</h1>
       </el-tab-pane>
     </el-tabs>
 
@@ -140,6 +175,8 @@
           username: null,
           userRole: null,
           users: [], // 用户列表
+          printLogs: [],//打印记录
+          dateTimePick: null,
           addDialogVisible: false, // 是否显示添加用户对话框
           userForm: {
             username: null,
@@ -148,7 +185,8 @@
 
           },
           visible: [],
-          isCollapse: 0
+          isCollapse: 0,
+
         };
       },
       methods: {
@@ -196,7 +234,7 @@
         // 删除用户
         deleteUser(row) {
           // 在这里调用后端 API 将用户从数据库中删除
-          if (row.username ==this.username) {
+          if (row.username == this.username) {
             this.$message.error('无法删除当前登录账号');
             return console.log("无法删除当前登录账号")
           }
@@ -216,6 +254,22 @@
             this.$message.error('删除失败');
           })
 
+        },
+        getPrintLogs() {
+          if (!this.dateTimePick) {
+            return this.$message.error('请选择时间段');
+          }
+          axios.get('/manage/printLogs', {
+            params:this.dateTimePick.map(time => time.getTime()),
+            headers: {
+              // 自定义请求头
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(response => {
+            this.printLogs = response.data;
+          }).catch(error => {
+            this.$message.error('获取失败');
+          })
         }
       },
       async mounted() {

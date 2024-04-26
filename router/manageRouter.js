@@ -92,9 +92,10 @@ manageRouter.post('/delete', authMiddleware, (req, res) => {
 })
 // 获取所有打印记录
 manageRouter.get('/printLogs', (req, res) => {
-    const { startTimestamp, endTimestamp } = req.body;
-    db.all(`SELECT * FROM printLogs WHERE timestamp BETWEEN ? AND ?`, [startTimestamp, endTimestamp], (err, rows) => {
+    const {'0': startTimestamp, '1':endTimestamp } = req.query;
+    db.all(`SELECT * FROM printLogs WHERE printTimestamp BETWEEN ? AND ?`, [startTimestamp, endTimestamp], (err, rows) => {
         if (err) {
+            console.log(err);
             res.status(500).json({ error: err.message });
         } else {
             res.json(rows);
