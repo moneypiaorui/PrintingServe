@@ -28,8 +28,8 @@ app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use('/backgroud',backgroud);
-app.use('/users', users_router);
+app.use('/api/backgroud',backgroud);
+app.use('/api/users', users_router);
 
 app.use(authMiddleware, (req, res, next) => {
     const log = `${new Date()} ${req.username} ${req.url}\n`;
@@ -39,19 +39,19 @@ app.use(authMiddleware, (req, res, next) => {
     next();
 });
 
-app.use('/protected', protected_router);
+app.use('/api/protected', protected_router);
 // 上传
-app.use('/upload', upload_router);
+app.use('/api/upload', upload_router);
 // 打印
-app.use('/print', print_router);
+app.use('/api/print', print_router);
 // 获取文件列表
-app.use('/files', flieRouter);
+app.use('/api/files', flieRouter);
 // token认证获取username
-app.use('/vertify',vertify_router);
+app.use('/api/vertify',vertify_router);
 // 管理路由
-app.use('/manage',manageRouter);
+app.use('/api/manage',manageRouter);
 // 日志查询
-app.use('/logs',logsRouter);
+app.use('/api/logs',logsRouter);
 
 
 // 启动服务器

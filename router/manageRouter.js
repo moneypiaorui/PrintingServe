@@ -90,7 +90,7 @@ manageRouter.post('/delete', authMiddleware, (req, res) => {
     });
 
 })
-// 获取所有打印记录
+// 获取打印记录
 manageRouter.get('/printLogs', (req, res) => {
     const {'0': startTimestamp, '1':endTimestamp } = req.query;
     db.all(`SELECT * FROM printLogs WHERE printTimestamp BETWEEN ? AND ?`, [startTimestamp, endTimestamp], (err, rows) => {
@@ -102,6 +102,43 @@ manageRouter.get('/printLogs', (req, res) => {
         }
     })
 })
+manageRouter.get('/allPrintLogs', (req, res) => {
+    db.all(`SELECT * FROM printLogs `, (err, rows) => {
+        if (err) {
+            console.log(err);
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json(rows);
+        }
+    })
+})
 
+// 获取文件信息
+manageRouter.get('/allFiles', (req, res) => {
+    db.all('SELECT * FROM files', (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        // 将查询结果发送给客户端
+        res.json(rows);
+    });
+})
+
+manageRouter.get('/getFile', (req, res) => {
+    const { timestamp, filename } = req.query;
+    const completeFilename = `${timestamp}-${filename}`;
+    let filePath = path.join(__dirname, '../uploads', completeFilename);
+    if (filename) {
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('Error sending file:', err);
+                res.status(err.status).end();
+            }
+        });
+    } else {
+        res.status(400).send('未选择文件');
+    }
+})
 module.exports = manageRouter;
 

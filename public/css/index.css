@@ -4,12 +4,12 @@
 /* 媒体查询，根据屏幕宽度选择图片 */
 @media screen and (max-width: 1000px) {
     .blur {
-        background-image: url('/backgroud/mp');
+        background-image: url('/api/backgroud/mp');
     }
 }
 @media screen and (min-width: 1000px) {
     .blur {
-        background-image: url('/backgroud/pc');
+        background-image: url('/api/backgroud/pc');
     }
 }
 

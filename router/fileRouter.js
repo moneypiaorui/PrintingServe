@@ -48,9 +48,12 @@ fileListRouter.get('/preview', authMiddleware, async (req, res) => {
     const ext = path.extname(filename);
     let filePath = path.join(__dirname, '../uploads', completeFilename);
     if (filename) {
-        await wordToPdf(filePath, filePath + '.pdf');
-        filePath = filePath + '.pdf';
-        
+        if (ext != '.pdf') {
+            await wordToPdf(filePath, filePath + '.pdf');
+            filePath = filePath + '.pdf';
+        }
+
+
         // // 使用文件流读取文件
         // const fileStream = fs.createReadStream(filePath);
         // // 设置响应头，指定响应内容
@@ -62,8 +65,9 @@ fileListRouter.get('/preview', authMiddleware, async (req, res) => {
             if (err) {
                 console.error('Error sending file:', err);
                 res.status(err.status).end();
-            } 
-            fs.unlink(filePath, (err) => { });
+            }
+            if (ext != '.pdf')
+                fs.unlink(filePath, (err) => { });
         });
     } else {
         res.status(400).send('未选择文件');

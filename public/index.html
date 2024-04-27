@@ -65,17 +65,17 @@
         <!-- 预览对话框 -->
         <el-dialog title="预览" top='5vh' :visible.sync="previewDialogVisible" width="80vw" modal='1'
             modal-append-to-body='1' append-to-body=1
-            :before-close="()=>{previewDialogVisible = 0;window.URL.revokeObjectURL(previewSrc)}">
+            :before-close="()=>{previewClose()}">
             <iframe title="preview" :src="previewSrc" frameborder="0"></iframe>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="window.open(previewSrc)">新窗口打开</el-button>
                 <el-button type="primary"
-                    @click="previewDialogVisible = false; window.URL.revokeObjectURL(previewSrc);">确 定</el-button>
+                    @click="previewClose">确 定</el-button>
             </span>
         </el-dialog>
         <!-- 打印预览 -->
         <el-dialog title="打印预览" top='5vh' :visible.sync="printDialogVisible" width="80vw" modal='1'
-            modal-append-to-body='1' append-to-body=1 :before-close="()=>{previewClose}">
+            modal-append-to-body='1' append-to-body=1 :before-close="()=>{previewClose()}">
             <iframe title="printPreview" :src="previewSrc" frameborder="0"></iframe>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="previewClose">取消</el-button>
@@ -146,7 +146,7 @@
                     const formData = new FormData();
                     formData.append('file', this.file, encodeURIComponent(this.file.name));
                     try {
-                        const response = await axios.post('/upload', formData, {
+                        const response = await axios.post('/api/upload', formData, {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
@@ -170,7 +170,7 @@
                 // 删除
                 async handleDelete(index, row) {
                     try {
-                        const response = await axios.post('/files/delete', row, {
+                        const response = await axios.post('/api/files/delete', row, {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
@@ -203,7 +203,7 @@
                     // url.search = new URLSearchParams(this.rFile).toString();
                     // this.previewSrc = url;
 
-                    return axios.get('/files/preview', {
+                    return axios.get('/api/files/preview', {
                         params: this.rFile,
                         responseType: 'blob', // 指定响应类型为二进制流
                         headers: {
@@ -264,7 +264,7 @@
                         });
                     }
                     try {
-                        const response = await axios.post('/print', this.rFile, {
+                        const response = await axios.post('/api/print', this.rFile, {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
@@ -306,7 +306,7 @@
                 // 获取所有文件的文件名
                 async getFileList() {
                     try {
-                        const response = await axios.get('/files/allFiles', {
+                        const response = await axios.get('/api/files/allFiles', {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
@@ -353,7 +353,7 @@
                     });
                 } else {
                     try {
-                        const response = await axios.get('/vertify', {
+                        const response = await axios.get('/api/vertify', {
                             headers: {
                                 Authorization: localStorage.getItem('token')
                             }
