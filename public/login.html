@@ -165,7 +165,7 @@
             async login() {
                 // 发送登录请求到后端
                 try {
-                    const response = await axios.post('/users/login', {
+                    const response = await axios.post('/api/users/login', {
                         username: this.username,
                         password: this.password
                     });

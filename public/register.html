@@ -159,7 +159,7 @@
                         this.al.innerHTML = "两次密码不同";
                         this.showAlert2();
                     } else {
-                        const response = await axios.post('/users/register', {
+                        const response = await axios.post('/api/users/register', {
                             username:this.username,
                             password:this.password,
                             userRole:this.userRole
