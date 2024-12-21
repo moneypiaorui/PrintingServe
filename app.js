@@ -52,7 +52,7 @@ app.use('/api/files', flieRouter);
 app.use('/api/vertify',vertify_router);
 // 管理路由
 app.use('/api/manage',manageRouter);
-// 日志查询
+// 用户查询个人历史打印
 app.use('/api/logs',logsRouter);
 
 
