@@ -2,12 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const fileWatcher = require('./components/fileWatcher.js');
 const upload_router = require('./router/uploadRouter');
 const flieRouter = require('./router/fileRouter.js');
 const print_router = require('./router/printRouter');
 const users_router = require('./router/users.js');
-const protected_router = require('./protectedRouter');
 const vertify_router = require('./router/vertify.js')
 const manageRouter = require('./router/manageRouter.js')
 const logsRouter = require('./router/logsRouter.js')
@@ -20,6 +18,11 @@ const app = express();
 app.use(cors());
 
 
+// 创建上传文件目录
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads', { recursive: true });
+    console.log('创建了 uploads 文件夹');
+}
 
 // 设置静态文件目录
 app.use(express.static('public'));
@@ -39,7 +42,6 @@ app.use(authMiddleware, (req, res, next) => {
     next();
 });
 
-app.use('/api/protected', protected_router);
 // 上传
 app.use('/api/upload', upload_router);
 // 打印

@@ -10,7 +10,7 @@ const router = express.Router();
 // 注册新用户
 router.post('/register', (req, res) => {
     const { username, password,userRole } = req.body;
-    db.get(`SELECT * FROM users WHERE username = ?`, [username], function (err, row) {
+    db.get(`SELECT * FROM users WHERE username = ?`, [username], async function (err, row) {
         if (err) {
             res.status(500).send(err.message);
             return;
@@ -18,7 +18,8 @@ router.post('/register', (req, res) => {
         if (row) {
             res.status(409).send(`用户名已存在`);
         } else {
-            db.run(`INSERT INTO users (username, password,userRole) VALUES (?, ?, ?)`, [username, bcrypt.hashSync(password, 10),userRole], function (err) {
+            const hashedPassword = await bcrypt.hash(password, 10)
+            db.run(`INSERT INTO users (username, password,userRole) VALUES (?, ?, ?)`, [username, hashedPassword,userRole], function (err) {
                 if (err) {
                     console.log("注册失败")
                     res.status(500).send(err.message);
