@@ -203,7 +203,7 @@
           visible_userDelete: [],
           visible_fileDelete:[],
           isCollapse: 0,
-          viewHeight: 0,
+          viewHeight: window.innerHeight,
           rUser: null,
         };
       },
@@ -273,6 +273,18 @@
           })
 
         },
+        getUsers() {
+          axios.get('/api/manage/allUsers', {
+            headers: {
+              // 自定义请求头
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(response => {
+            this.users = response.data;
+          }).catch(error => {
+            this.$message.error('获取失败');
+          })
+        },
         getPrintLogs() {
           if (!this.dateTimePick) {
             return this.$message.error('请选择时间段');
@@ -289,18 +301,7 @@
             this.$message.error('获取失败');
           })
         },
-        getUsers() {
-          axios.get('/api/manage/allUsers', {
-            headers: {
-              // 自定义请求头
-              'Authorization': localStorage.getItem('token')
-            }
-          }).then(response => {
-            this.users = response.data;
-          }).catch(error => {
-            this.$message.error('获取失败');
-          })
-        },
+        
         getFiles() {
           axios.get('/api/manage/allFiles', {
             headers: {

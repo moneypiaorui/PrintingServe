@@ -191,7 +191,7 @@
                     }
                 },
                 getPreview() {
-                    if (!this.rFile.timestamp) {
+                    if (!this.rFile||!this.rFile.timestamp) {
                         this.$message({
                             message: '请先选择文件',
                             type: 'warning'
