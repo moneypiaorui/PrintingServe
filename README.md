@@ -7,10 +7,11 @@
 - component内authMiddleware是token认证中间件，database注册数据库接口，fileWatcher监视uploads文件夹的变化并做出相应处理（还没写处理）
 ### 前端用了VUE和elementUI
 - 暂时没有优化到vue-cli项目上，因为不清楚vue-cli如何前后端用一个端口
-### 打印使用pdf-to-printer包，只能打印图片和pdf，docx使用libreoffice+office-to-pdf包实现
-- https://blog.csdn.net/weixin_40726805/article/details/109165744 可以看这篇文章
-- libreoffice 从官网下好后记得配置环境变量保证soffice可以在终端运行
-### 可以考虑使用win32com
+### 打印使用pdf-to-printer包，只能打印图片和pdf，~~docx使用libreoffice+office-to-pdf包实现~~ 最新实现使用Windows Office来转换word
+- ~~https://blog.csdn.net/weixin_40726805/article/details/109165744 可以看这篇文章~~
+- ~~libreoffice 从官网下好后记得配置环境变量保证soffice可以在终端运行~~
+- nodejs增加两个依赖node-gyp和winax，实现windows com工具的调用
+### 考虑使用win32com
 - python 使用win32com包可以使用Microsoft Office将word另存为pdf
 - nodejs可以安装node-gyp+winax使用windows的com
 
