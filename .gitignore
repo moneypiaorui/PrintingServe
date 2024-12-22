@@ -1,5 +1,6 @@
 /user.db
 /node_modules/
+/test.mjs
 /test.js
 /uploads/
 /print_logs.txt

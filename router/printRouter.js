@@ -17,7 +17,7 @@ printRouter.post('/', authMiddleware, async (req, res) => {
         let filePath = path.join(__dirname, '../uploads', completeFilename);
         const ext = path.extname(filename);
         // 转化成pdf
-        if (ext != '.pdf') {
+        if (ext == '.doc' || ext == '.docx') {
             await wordToPdf(filePath, filePath + '.pdf');
             filePath = filePath + '.pdf';
         }
@@ -50,7 +50,7 @@ printRouter.post('/', authMiddleware, async (req, res) => {
                 } else {
                     res.status(200).json({ message: '文件已发送到打印机进行打印', err: "不是PDF", pages: 1 });
                 }
-                if (ext != '.pdf')
+                if (ext == '.doc' || ext == '.docx')
                     fs.unlink(filePath, (err) => { });
             })
             .catch((err) => {

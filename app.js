@@ -58,5 +58,5 @@ app.use('/api/logs',logsRouter);
 
 // 启动服务器
 app.listen(3000, () => {
-    console.log('服务器已启动，监听端口 3000');
+    console.log('服务器已启动，地址 http://localhost:3000');
 });

@@ -48,7 +48,7 @@ fileListRouter.get('/preview', authMiddleware, async (req, res) => {
     const ext = path.extname(filename);
     let filePath = path.join(__dirname, '../uploads', completeFilename);
     if (filename) {
-        if (ext != '.pdf') {
+        if (ext == '.doc' || ext == '.docx') {
             await wordToPdf(filePath, filePath + '.pdf');
             filePath = filePath + '.pdf';
         }
@@ -66,7 +66,7 @@ fileListRouter.get('/preview', authMiddleware, async (req, res) => {
                 console.error('Error sending file:', err);
                 res.status(err.status).end();
             }
-            if (ext != '.pdf')
+            if (ext == '.doc' || ext == '.docx')
                 fs.unlink(filePath, (err) => { });
         });
     } else {
